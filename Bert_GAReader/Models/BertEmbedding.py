@@ -150,4 +150,3 @@ class QO_interaction(nn.Module):
             g = torch.sigmoid(H_ano.matmul(self.weight_ano) + F.linear(input_feature,self.weight_ori,self.bias))
             return torch.mul(g,input_feature) + torch.mul((1-g),H_ano)
 
-            

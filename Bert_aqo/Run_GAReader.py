@@ -18,7 +18,7 @@ from tqdm import tqdm, trange
 from pytorch_pretrained_bert.optimization import BertAdam
 from transformers import BertConfig, BertTokenizer,AdamW,get_linear_schedule_with_warmup
 
-from Bert_aqo.Utils.bert_embedding_utils import load_data
+from Bert_aqo.Utils.bert_embedding_utils import load_data,collate_fn
 from Bert_aqo.Utils.utils import (classifiction_metric, epoch_time,
                                        get_device, word_tokenize)
 
@@ -48,8 +48,9 @@ def train(epoch_num, model, train_dataloader, dev_dataloader, optimizer, criteri
         for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration")):
 
             optimizer.zero_grad()
-            batch = tuple(torch.tensor(t).to(device) for t in batch)
-            logits = model(batch)
+            batch_part = [torch.tensor(t).to(device) for t in batch if not isinstance(t,list)]
+            batch_part.append([t.to(device) for t in batch[6]])
+            logits = model(batch_part)
 
             loss = criterion(logits.view(-1, len(label_list)), batch[7])
 
@@ -195,8 +196,8 @@ def main(config, model_filename):
     print(len(train_dataset))
     train_sampler = RandomSampler(train_dataset)
     dev_sampler =RandomSampler(dev_dataset)
-    train_dataloader  = DataLoader(train_dataset,sampler= train_sampler,batch_size= config.train_batch_size,num_workers=8,pin_memory=False)
-    dev_dataloader  = DataLoader(dev_dataset,sampler= dev_sampler,batch_size= config.dev_batch_size,num_workers=8,pin_memory=False)
+    train_dataloader  = DataLoader(train_dataset,sampler= train_sampler,batch_size= config.train_batch_size,num_workers=8,pin_memory=False,collate_fn=collate_fn)
+    dev_dataloader  = DataLoader(dev_dataset,sampler= dev_sampler,batch_size= config.dev_batch_size,num_workers=8,pin_memory=False,collate_fn=collate_fn)
     # train_iterator = trange(int(config.epoch_num))
     if config.model_name == "GAReader":
         from Bert_aqo.GAReader.GAReader import GAReader

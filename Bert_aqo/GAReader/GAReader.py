@@ -39,7 +39,8 @@ class GAReader(nn.Module):
 
     def forward(self, batch):
         o0_ids,o1_ids,o2_ids,o3_ids,o4_ids = batch[0],batch[1],batch[2],batch[3],batch[4]
-        a_ids,q_ids,a_len = batch[5],batch[6],batch[7]
+        q_ids,a_len,a_ids = batch[5],batch[6],batch[7]
+        sentences_emb = []
         
         # question and option interaction by Bert
         o0_emb = self.word_embedding(input_ids=o0_ids)
@@ -49,8 +50,8 @@ class GAReader(nn.Module):
         o4_emb = self.word_embedding(input_ids=o4_ids)
         # paragraph selection
         for sentence_id in a_ids:
-            print(sentence_id)
-        article_emb = self.word_embedding(input_ids=a_ids,max_l=a_len)
+            sentences_emb.append(self.word_embedding(input_ids=sentence_id))
+        # article_emb = self.word_embedding(input_ids=a_ids,max_l=a_len)
         # options interaction
         o0_emb_new = self.qo_attention(o0_emb,[o1_emb,o2_emb,o3_emb,o4_emb])
         o1_emb_new = self.qo_attention(o0_emb,[o0_emb,o2_emb,o3_emb,o4_emb])

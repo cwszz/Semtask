@@ -118,3 +118,14 @@ def load_data(path, device, tokenizer, cache_dir,max_query,max_sentence,max_opti
 
     return train_dataset,dev_dataset,test_dataset
 
+def collate_fn(batch):
+    # t = batch 
+    question = torch.cat([item[6].unsqueeze(0) for item in batch],dim=0)
+    option_0 = torch.cat([item[0].unsqueeze(0) for item in batch],dim=0)
+    option_1 = torch.cat([item[1].unsqueeze(0) for item in batch],dim=0)
+    option_2 = torch.cat([item[2].unsqueeze(0) for item in batch],dim=0)
+    option_3 = torch.cat([item[3].unsqueeze(0) for item in batch],dim=0)
+    option_4 = torch.cat([item[4].unsqueeze(0) for item in batch],dim=0)
+    article = [item[5] for item in batch ]
+    label = torch.tensor([item[8] for item in batch],dtype=torch.long)
+    return [option_0,option_1,option_2,option_3,option_4,question,article,label]
