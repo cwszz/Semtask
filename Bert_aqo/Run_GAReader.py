@@ -18,8 +18,8 @@ from tqdm import tqdm, trange
 from pytorch_pretrained_bert.optimization import BertAdam
 from transformers import BertConfig, BertTokenizer,AdamW,get_linear_schedule_with_warmup
 
-from Bert_GAReader.Utils.bert_embedding_utils import load_data
-from Bert_GAReader.Utils.utils import (classifiction_metric, epoch_time,
+from Bert_aqo.Utils.bert_embedding_utils import load_data
+from Bert_aqo.Utils.utils import (classifiction_metric, epoch_time,
                                        get_device, word_tokenize)
 
 logger = logging.getLogger(__name__)
@@ -181,24 +181,25 @@ def main(config, model_filename):
     tokenizer = BertTokenizer.from_pretrained(config.bert_config_path,do_lower_case=True)
     bert_config = BertConfig.from_pretrained(config.bert_config_path)
 
-    cache_train_dataset = "cached_dataset_train_2"
-    cache_dev_dataset = "cached_dataset_dev_2"
+    cache_train_dataset = "cached_dataset_train_DCMN"
+    cache_dev_dataset = "cached_dataset_dev_DCMN"
     if os.path.exists(config.cache_dir + '/' + cache_train_dataset):
         logger.info("Loading features from cached file %s", config.cache_dir + '/' + cache_train_dataset)
         train_dataset = torch.load(config.cache_dir + '/' + cache_train_dataset)
         dev_dataset = torch.load(config.cache_dir + '/' + cache_dev_dataset)
     else:
-        train_dataset, dev_dataset, test_dataset = load_data(config.data_path,  device, tokenizer, config.cache_dir,128,2560)
+        train_dataset, dev_dataset, test_dataset = load_data(config.data_path,  device, tokenizer, config.cache_dir,96,128,5)
         logger.info("save cached file in  %s", config.cache_dir)
         torch.save(train_dataset,config.cache_dir + '/' + cache_train_dataset)
         torch.save(dev_dataset,config.cache_dir + '/' + cache_dev_dataset)
+    print(len(train_dataset))
     train_sampler = RandomSampler(train_dataset)
     dev_sampler =RandomSampler(dev_dataset)
     train_dataloader  = DataLoader(train_dataset,sampler= train_sampler,batch_size= config.train_batch_size,num_workers=8,pin_memory=False)
     dev_dataloader  = DataLoader(dev_dataset,sampler= dev_sampler,batch_size= config.dev_batch_size,num_workers=8,pin_memory=False)
     # train_iterator = trange(int(config.epoch_num))
     if config.model_name == "GAReader":
-        from Bert_GAReader.GAReader.GAReader import GAReader
+        from Bert_aqo.GAReader.GAReader import GAReader
         model = GAReader(
             config.bert_word_dim, config.output_dim, config.hidden_size,
             config.rnn_num_layers, config.ga_layers, config.bidirectional,
@@ -265,16 +266,16 @@ if __name__ == "__main__":
     data_dir = "./data/1task_train"
     embedding_folder = "./ga/cache/vocabulary/"
 
-    output_dir = "./ga/DCMN_output/"
-    cache_dir = "./ga/DCMN_cache/"
-    log_dir = "./ga/DCMN_log/"
+    output_dir = "./ga/DCMN+_output/"
+    cache_dir = "./ga/DCMN+_cache/"
+    log_dir = "./ga/DCMN+_log/"
     bert_config_path = "./new_bert"
     
     model_filename = "model_adam1.pt"
     
 
     if model_name == "GAReader":
-        from Bert_GAReader.GAReader import GAReader, args
+        from Bert_aqo.GAReader import GAReader, args
 
 
         main(args.get_args(data_dir, cache_dir, embedding_folder, output_dir, log_dir,bert_config_path), model_filename)
