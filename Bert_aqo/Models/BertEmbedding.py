@@ -95,30 +95,25 @@ class Qa_attention_Emb(nn.Module):
             
             aq_attention = F.softmax(torch.bmm(article_feature.matmul(self.weight1_1),query_op_feature.transpose(1,2)),dim=softmax_dim)
             qa_attention = F.softmax(torch.bmm(query_op_feature.matmul(self.weight1_2),article_feature.transpose(1,2)),dim=softmax_dim)
-            # gg = torch.bmm(aq_attention,query_op_feature)
-            # ggg = torch.bmm(qa_attention,article_feature)
             S_a = self.relu(torch.bmm(aq_attention,query_op_feature).matmul(self.weight2_1))
             S_q = self.relu(torch.bmm(qa_attention,article_feature).matmul(self.weight2_2))
             # S_a = self.relu(self.normal(torch.bmm(aq_attention,query_op_feature).matmul(self.weight2_1)))
             # S_q = self.relu(self.normal(torch.bmm(qa_attention,article_feature).matmul(self.weight2_2)))
             S_aq = torch.max(S_a,dim=1)[0]
             S_qa = torch.max(S_q,dim=1)[0]
-            # temp = torch.mm(S_aq,self.distribution_1)
-            # temp2 = torch.addmm(self.bias,S_qa,self.distribution_2)
-            # g =torch.sigmoid(torch.mm(S_aq,self.distribution_1)+torch.addmm(self.bias,S_qa,self.distribution_2))
             g = torch.div(torch.ones(S_qa.size()),2).to(aq_attention.device)
             return torch.mul(g,S_aq) + torch.mul((1-g),S_qa)
 
-class QO_interaction(nn.Module):
+class OO_interaction(nn.Module):
 
     def __init__(self,input_size,option_num):
-        super(QO_interaction, self).__init__()
+        super(OO_interaction, self).__init__()
         self.hidden_size = input_size
         self.weight = Parameter(torch.Tensor(input_size,input_size))
         self.weight_2 = Parameter(torch.Tensor(input_size*(option_num-1),input_size))
         self.weight_ano = Parameter(torch.Tensor(input_size,input_size))
         self.weight_ori = Parameter(torch.Tensor(input_size,input_size))
-        self.bias = Parameter(torch.Tensor(128,input_size))
+        self.bias = Parameter(torch.Tensor(5,input_size))
         # self.normal = nn.LayerNorm(768)
         self.relu = nn.ReLU(inplace=True)
         self.reset_parameters()
@@ -150,4 +145,21 @@ class QO_interaction(nn.Module):
             g = torch.sigmoid(H_ano.matmul(self.weight_ano) + F.linear(input_feature,self.weight_ori,self.bias))
             return torch.mul(g,input_feature) + torch.mul((1-g),H_ano)
 
-            
+# class Para_select_cosine(nn.Module):
+#     def __init__(self,input_size):
+#         super(Para_select, self).__init__()
+#         self.hidden_size = input_size
+#         self.weight = Parameter(torch.Tensor(input_size,input_size))
+#         self.weight_2 = Parameter(torch.Tensor(input_size,input_size))
+#         self.reset_parameters()
+
+#     def reset_parameters(self):
+#         init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+#         init.kaiming_uniform_(self.weight_2, a=math.sqrt(5))
+#         if self.bias is not None:
+#             fan_in, _ = init._calculate_fan_in_and_fan_out(self.weight)
+#             bound = 1 / math.sqrt(fan_in)
+#             init.uniform_(self.bias, -bound, bound)
+    
+#     def forward(self,a,q,o):
+#         for sentence in a:

@@ -165,7 +165,7 @@ def main(config, model_filename):
         config.output_dir, model_filename)
 
     # Prepare the device
-    gpu_ids = [2]
+    gpu_ids = [3]
     device, n_gpu = get_device(gpu_ids[0])
     if n_gpu > 1:
         n_gpu = len(gpu_ids)

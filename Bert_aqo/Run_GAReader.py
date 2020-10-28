@@ -52,9 +52,9 @@ def train(epoch_num, model, train_dataloader, dev_dataloader, optimizer, criteri
             batch_part.append([t.to(device) for t in batch[6]])
             logits = model(batch_part)
 
-            loss = criterion(logits.view(-1, len(label_list)), batch[7])
+            loss = criterion(logits.view(-1, len(label_list)), batch_part[6])
 
-            labels = batch[7].detach().cpu().numpy()
+            labels = batch_part[6].detach().cpu().numpy()
             preds = np.argmax(logits.detach().cpu().numpy(), axis=1)
             step_loss += loss.item()
             if(step % 10 == 0):
@@ -96,11 +96,7 @@ def train(epoch_num, model, train_dataloader, dev_dataloader, optimizer, criteri
                     writer.write("  loss/dev    " + str(dev_loss)[0:6] + "   " + str(c) +'\n')
                     writer.write("  acc/train   " + str(train_acc)[0:6] + "   " + str(c) )
                     writer.write("  acc/dev     " + str(dev_acc)[0:6] + "   " + str(c) +'\n' )
-                # writer.add_scalar("loss/train", train_loss, c)
-                # writer.add_scalar("loss/dev", dev_loss, c)
-
-                # writer.add_scalar("acc/train", train_acc, c)
-                # writer.add_scalar("acc/dev", dev_acc, c)
+               
 
                 for label in label_list:
                     with open(logging_dir+'/log.txt','a+') as writer:
@@ -129,14 +125,15 @@ def evaluate(model, iterator, criterion, label_list,device,log_dir):
     with torch.no_grad():
         for batch in tqdm(iterator):
             with torch.no_grad():
-                batch = tuple(torch.tensor(t).to(device) for t in batch)
+                batch_part = [torch.tensor(t).to(device) for t in batch if not isinstance(t,list)]
+                batch_part.append([t.to(device) for t in batch[6]])
                 logits = model(batch)
             cnt += 1
-            loss = criterion(logits.view(-1, len(label_list)), batch[7])
+            loss = criterion(logits.view(-1, len(label_list)), batch_part[6])
             if cnt % 10 == 1:
                 with open(log_dir + '/test_logits.txt','a+') as f:
                     f.write(str(logits) + '\n')
-            labels = batch[7].detach().cpu().numpy()
+            labels = batch_part[6].detach().cpu().numpy()
             preds = np.argmax(logits.detach().cpu().numpy(), axis=1)
 
             all_preds = np.append(all_preds, preds)
@@ -166,7 +163,7 @@ def main(config, model_filename):
         config.output_dir, model_filename)
 
     # Prepare the device
-    gpu_ids = [2]
+    gpu_ids = [3]
     device, n_gpu = get_device(gpu_ids[0])
     if n_gpu > 1:
         n_gpu = len(gpu_ids)
