@@ -127,7 +127,7 @@ def evaluate(model, iterator, criterion, label_list,device,log_dir):
             with torch.no_grad():
                 batch_part = [torch.tensor(t).to(device) for t in batch if not isinstance(t,list)]
                 batch_part.append([t.to(device) for t in batch[6]])
-                logits = model(batch)
+                logits = model(batch_part)
             cnt += 1
             loss = criterion(logits.view(-1, len(label_list)), batch_part[6])
             if cnt % 10 == 1:

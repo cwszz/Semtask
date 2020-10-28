@@ -55,12 +55,12 @@ class GAReader(nn.Module):
     def forward(self, batch):
         o0_ids,o1_ids,o2_ids,o3_ids,o4_ids = batch[0],batch[1],batch[2],batch[3],batch[4]
         q_ids,a_len,a_ids = batch[5],batch[6],batch[7]
-        sentences_emb_o0 = []
-        sentences_emb_o1 = []
-        sentences_emb_o2 = []
-        sentences_emb_o3 = []
-        sentences_emb_o4 = []
-        
+        # sentences_emb_o0 = []
+        # sentences_emb_o1 = []
+        # sentences_emb_o2 = []
+        # sentences_emb_o3 = []
+        # sentences_emb_o4 = []
+        sentences_emb_o = []
         # question and option interaction by Bert
         o0_emb = self.word_embedding(input_ids=o0_ids)
         o1_emb = self.word_embedding(input_ids=o1_ids)
@@ -70,16 +70,17 @@ class GAReader(nn.Module):
         q_emb = self.word_embedding(input_ids=q_ids)
         # paragraph selection
         for batch_id,batch_sentences in enumerate(a_ids):
-            sentences_emb_o0.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o0_emb[batch_id],3))
-            sentences_emb_o1.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o1_emb[batch_id],3))
-            sentences_emb_o2.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o2_emb[batch_id],3))
-            sentences_emb_o3.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o3_emb[batch_id],3))
-            sentences_emb_o4.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o4_emb[batch_id],3))
-        sentences_o0 = torch.cat(sentences_emb_o0,dim=0)
-        sentences_o1 = torch.cat(sentences_emb_o1,dim=0)
-        sentences_o2 = torch.cat(sentences_emb_o2,dim=0)
-        sentences_o3 = torch.cat(sentences_emb_o3,dim=0)
-        sentences_o4 = torch.cat(sentences_emb_o4,dim=0)
+            sentences_emb_o.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),
+                q_emb[batch_id],torch.cat([o0_emb[batch_id],o1_emb[batch_id],o2_emb[batch_id],o3_emb[batch_id],o4_emb[batch_id]],dim=0),5))
+            # sentences_emb_o1.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o1_emb[batch_id],3))
+            # sentences_emb_o2.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o2_emb[batch_id],3))
+            # sentences_emb_o3.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o3_emb[batch_id],3))
+            # sentences_emb_o4.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o4_emb[batch_id],3))
+        sentences_o = torch.cat(sentences_emb_o,dim=0)
+        # sentences_o1 = torch.cat(sentences_emb_o1,dim=0)
+        # sentences_o2 = torch.cat(sentences_emb_o2,dim=0)
+        # sentences_o3 = torch.cat(sentences_emb_o3,dim=0)
+        # sentences_o4 = torch.cat(sentences_emb_o4,dim=0)
         # article_emb = self.word_embedding(input_ids=a_ids,max_l=a_len)
         # options interaction
         o0_emb_new = self.oo_attention(o0_emb,[o1_emb,o2_emb,o3_emb,o4_emb])
@@ -88,20 +89,20 @@ class GAReader(nn.Module):
         o3_emb_new = self.oo_attention(o0_emb,[o0_emb,o1_emb,o2_emb,o4_emb])
         o4_emb_new = self.oo_attention(o0_emb,[o0_emb,o1_emb,o2_emb,o3_emb])
         # option and article interaction
-        ao0_emb = self.dropout(self.BiMatching(sentences_o0,o0_emb_new))
-        qa0_emb = self.dropout(self.BiMatching(sentences_o0,q_emb))
+        ao0_emb = self.dropout(self.BiMatching(sentences_o,o0_emb_new))
+        qa0_emb = self.dropout(self.BiMatching(sentences_o,q_emb))
         qo0_emb = self.dropout(self.BiMatching(o0_emb_new,q_emb))
-        ao1_emb = self.dropout(self.BiMatching(sentences_o1,o1_emb_new))
-        qa1_emb = self.dropout(self.BiMatching(sentences_o1,q_emb))
+        ao1_emb = self.dropout(self.BiMatching(sentences_o,o1_emb_new))
+        qa1_emb = self.dropout(self.BiMatching(sentences_o,q_emb))
         qo1_emb = self.dropout(self.BiMatching(o1_emb_new,q_emb))
-        ao2_emb = self.dropout(self.BiMatching(sentences_o2,o2_emb_new))
-        qa2_emb = self.dropout(self.BiMatching(sentences_o2,q_emb))
+        ao2_emb = self.dropout(self.BiMatching(sentences_o,o2_emb_new))
+        qa2_emb = self.dropout(self.BiMatching(sentences_o,q_emb))
         qo2_emb = self.dropout(self.BiMatching(o2_emb_new,q_emb))
-        ao3_emb = self.dropout(self.BiMatching(sentences_o3,o3_emb_new))
-        qa3_emb = self.dropout(self.BiMatching(sentences_o3,q_emb))
+        ao3_emb = self.dropout(self.BiMatching(sentences_o,o3_emb_new))
+        qa3_emb = self.dropout(self.BiMatching(sentences_o,q_emb))
         qo3_emb = self.dropout(self.BiMatching(o3_emb_new,q_emb))
-        ao4_emb = self.dropout(self.BiMatching(sentences_o4,o4_emb_new))
-        qa4_emb = self.dropout(self.BiMatching(sentences_o4,q_emb))
+        ao4_emb = self.dropout(self.BiMatching(sentences_o,o4_emb_new))
+        qa4_emb = self.dropout(self.BiMatching(sentences_o,q_emb))
         qo4_emb = self.dropout(self.BiMatching(o4_emb_new,q_emb))
         option0 = torch.cat([ao0_emb,qa0_emb,qo0_emb],dim=-1)
         option1 = torch.cat([ao1_emb,qa1_emb,qo1_emb],dim=-1)
