@@ -48,7 +48,7 @@ class GAReader(nn.Module):
         Score_q = torch.div(torch.sum(torch.max(cosine_pq,dim=1)[0],dim=-1),q.size(0))#[1][0:topK]torch.max(
         Score_o = torch.div(torch.sum(torch.max(cosine_po,dim=1)[0],dim=-1),o.size(0))#[1][0:topK]torch.max(
         Rank = torch.sort(torch.sort(torch.add(Score_q,Score_o),descending=True)[1][0:topK],descending=False)[0].cpu().numpy().tolist() # 按照文章顺序组合
-        for i in range(topK-len(Rank)):
+        for i in range(topK-len(Rank)): # 优化小技巧，在数据处理上对所有小于5的直接repeat出5个来
             Rank.append(0)
         return torch.cat([a[i] for i in Rank],dim=0).unsqueeze(0)
 
@@ -77,17 +77,17 @@ class GAReader(nn.Module):
             # sentences_emb_o3.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o3_emb[batch_id],3))
             # sentences_emb_o4.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o4_emb[batch_id],3))
         sentences_o = torch.cat(sentences_emb_o,dim=0)
-        # sentences_o1 = torch.cat(sentences_emb_o1,dim=0)
-        # sentences_o2 = torch.cat(sentences_emb_o2,dim=0)
-        # sentences_o3 = torch.cat(sentences_emb_o3,dim=0)
-        # sentences_o4 = torch.cat(sentences_emb_o4,dim=0)
-        # article_emb = self.word_embedding(input_ids=a_ids,max_l=a_len)
+            # sentences_o1 = torch.cat(sentences_emb_o1,dim=0)
+            # sentences_o2 = torch.cat(sentences_emb_o2,dim=0)
+            # sentences_o3 = torch.cat(sentences_emb_o3,dim=0)
+            # sentences_o4 = torch.cat(sentences_emb_o4,dim=0)
+            # article_emb = self.word_embedding(input_ids=a_ids,max_l=a_len)
         # options interaction
         o0_emb_new = self.oo_attention(o0_emb,[o1_emb,o2_emb,o3_emb,o4_emb])
-        o1_emb_new = self.oo_attention(o0_emb,[o0_emb,o2_emb,o3_emb,o4_emb])
-        o2_emb_new = self.oo_attention(o0_emb,[o0_emb,o1_emb,o3_emb,o4_emb])
-        o3_emb_new = self.oo_attention(o0_emb,[o0_emb,o1_emb,o2_emb,o4_emb])
-        o4_emb_new = self.oo_attention(o0_emb,[o0_emb,o1_emb,o2_emb,o3_emb])
+        o1_emb_new = self.oo_attention(o1_emb,[o0_emb,o2_emb,o3_emb,o4_emb])
+        o2_emb_new = self.oo_attention(o2_emb,[o0_emb,o1_emb,o3_emb,o4_emb])
+        o3_emb_new = self.oo_attention(o3_emb,[o0_emb,o1_emb,o2_emb,o4_emb])
+        o4_emb_new = self.oo_attention(o4_emb,[o0_emb,o1_emb,o2_emb,o3_emb])
         # option and article interaction
         ao0_emb = self.dropout(self.BiMatching(sentences_o,o0_emb_new))
         qa0_emb = self.dropout(self.BiMatching(sentences_o,q_emb))

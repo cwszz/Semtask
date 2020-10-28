@@ -236,7 +236,7 @@ def main(config, model_filename):
             nd in n for nd in no_decay) and 'bert'  in n ]}
     ]
     # optimizer = optim.SGD(optimizer_grouped_parameters,lr=config.lr)
-    optimizer = BertAdam(optimizer_grouped_parameters,lr=config.lr,warmup=1e-2,t_total=2000000)
+    optimizer = BertAdam(optimizer_grouped_parameters,lr=config.lr,warmup=1e-3,t_total=200000)
     # model,optimizer = amp.initialize(model,optimizer,opt_level="01")
     # scheduler = get_linear_schedule_with_warmup(optimizer,40000,500000)
     

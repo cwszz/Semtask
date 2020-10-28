@@ -75,10 +75,10 @@ class GAReader(nn.Module):
         qo4_emb = self.word_embedding(input_ids=qo4_ids)
         # options interaction
         qo0_emb_new = self.qo_attention(qo0_emb,[qo1_emb,qo2_emb,qo3_emb,qo4_emb])
-        qo1_emb_new = self.qo_attention(qo0_emb,[qo0_emb,qo2_emb,qo3_emb,qo4_emb])
-        qo2_emb_new = self.qo_attention(qo0_emb,[qo0_emb,qo1_emb,qo3_emb,qo4_emb])
-        qo3_emb_new = self.qo_attention(qo0_emb,[qo0_emb,qo1_emb,qo2_emb,qo4_emb])
-        qo4_emb_new = self.qo_attention(qo0_emb,[qo0_emb,qo1_emb,qo2_emb,qo3_emb])
+        qo1_emb_new = self.qo_attention(qo1_emb,[qo0_emb,qo2_emb,qo3_emb,qo4_emb])
+        qo2_emb_new = self.qo_attention(qo2_emb,[qo0_emb,qo1_emb,qo3_emb,qo4_emb])
+        qo3_emb_new = self.qo_attention(qo3_emb,[qo0_emb,qo1_emb,qo2_emb,qo4_emb])
+        qo4_emb_new = self.qo_attention(qo4_emb,[qo0_emb,qo1_emb,qo2_emb,qo3_emb])
         # question_option and article interaction
         qao0_emb = self.dropout(self.BiMatching(article_emb,qo0_emb_new))
         qao1_emb = self.dropout(self.BiMatching(article_emb,qo1_emb_new))
