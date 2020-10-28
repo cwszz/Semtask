@@ -16,7 +16,7 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from torchtext import data, datasets, vocab
 from tqdm import tqdm, trange
 from pytorch_pretrained_bert.optimization import BertAdam
-from transformers import BertConfig, BertTokenizer,AdamW,get_linear_schedule_with_warmup
+from transformers import BertConfig, BertTokenizer,AdamW
 
 from Bert_aqo.Utils.bert_embedding_utils import load_data,collate_fn
 from Bert_aqo.Utils.utils import (classifiction_metric, epoch_time,
@@ -163,7 +163,7 @@ def main(config, model_filename):
         config.output_dir, model_filename)
 
     # Prepare the device
-    gpu_ids = [3]
+    gpu_ids = [4]
     device, n_gpu = get_device(gpu_ids[0])
     if n_gpu > 1:
         n_gpu = len(gpu_ids)

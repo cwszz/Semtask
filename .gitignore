@@ -3,3 +3,5 @@ ga
 new_bert
 xlnet_model
 data
+.vscode
+__pycache__
