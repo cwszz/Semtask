@@ -24,14 +24,15 @@ from Bert_aqo.Utils.utils import (classifiction_metric, epoch_time,
 
 logger = logging.getLogger(__name__)
 def train(epoch_num, model, train_dataloader, dev_dataloader, optimizer, criterion, label_list, out_model_file, log_dir,
-          print_step, clip,device):
+          print_step, clip,device,experiment_detail):
     model.train()
     logging_dir = log_dir + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
     outputting_dir = output_dir + time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime(time.time()))
     # writer = SummaryWriter(log_dir=logging_dir)
     if not os.path.exists(logging_dir):
         os.mkdir(logging_dir)
-    
+    with open(logging_dir + '/experment_setting.txt','a+') as f:
+        f.write(experiment_detail)
     global_step = 0
     best_dev_loss = float('inf')
     best_acc = 0.0
@@ -150,6 +151,7 @@ def evaluate(model, iterator, criterion, label_list,device,log_dir):
 
 
 def main(config, model_filename):
+    device_id = 4
     if not os.path.exists(config.log_dir):
         os.makedirs(config.log_dir)
 
@@ -163,7 +165,7 @@ def main(config, model_filename):
         config.output_dir, model_filename)
 
     # Prepare the device
-    gpu_ids = [4]
+    gpu_ids = [device_id]
     device, n_gpu = get_device(gpu_ids[0])
     if n_gpu > 1:
         n_gpu = len(gpu_ids)
@@ -193,8 +195,8 @@ def main(config, model_filename):
     print(len(train_dataset))
     train_sampler = RandomSampler(train_dataset)
     dev_sampler =RandomSampler(dev_dataset)
-    train_dataloader  = DataLoader(train_dataset,sampler= train_sampler,batch_size= config.train_batch_size,num_workers=8,pin_memory=False,collate_fn=collate_fn)
-    dev_dataloader  = DataLoader(dev_dataset,sampler= dev_sampler,batch_size= config.dev_batch_size,num_workers=8,pin_memory=False,collate_fn=collate_fn)
+    train_dataloader  = DataLoader(train_dataset,sampler= train_sampler,batch_size= config.train_batch_size,num_workers=4,pin_memory=False,collate_fn=collate_fn)
+    dev_dataloader  = DataLoader(dev_dataset,sampler= dev_sampler,batch_size= config.dev_batch_size,num_workers=4,pin_memory=False,collate_fn=collate_fn)
     # train_iterator = trange(int(config.epoch_num))
     if config.model_name == "GAReader":
         from Bert_aqo.GAReader.GAReader import GAReader
@@ -209,21 +211,22 @@ def main(config, model_filename):
     param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
 
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
+    part_1_1_lr,part_1_2_lr,part_2_1_lr,part_2_2_lr = 1e-4, 1e-4,2e-4,2e-4
     optimizer_grouped_parameters = [
         {'params': [p for n, p in param_optimizer if not any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] , 'weight_decay': 0.01,'lr':1e-3,
+            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] , 'weight_decay': 0.01,'lr':part_1_1_lr,
         'name':[n for n, p in param_optimizer if not any(
             nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] },
         {'params': [p for n, p in param_optimizer if any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n], 'weight_decay': 0.0,'lr':1e-3,
+            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n], 'weight_decay': 0.0,'lr':part_1_2_lr,
         'name':[n for n, p in param_optimizer if  any(
             nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] },
         {'params': [p for n, p in param_optimizer if not any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n] , 'weight_decay': 0.01,'lr':2e-3,
+            nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n] , 'weight_decay': 0.01,'lr':part_2_1_lr,
         'name':[n for n, p in param_optimizer if not any(
             nd in n for nd in no_decay) and 'bert' not in n and 'bias'  in n]},
         {'params': [p for n, p in param_optimizer if any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n], 'weight_decay': 0.0,'lr':2e-3,
+            nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n], 'weight_decay': 0.0,'lr':part_2_2_lr,
         'name':[n for n, p in param_optimizer if  any(
             nd in n for nd in no_decay) and 'bert' not in n and 'bias'  in n]},
         {'params': [p for n, p in param_optimizer if not any(
@@ -236,7 +239,7 @@ def main(config, model_filename):
             nd in n for nd in no_decay) and 'bert'  in n ]}
     ]
     # optimizer = optim.SGD(optimizer_grouped_parameters,lr=config.lr)
-    optimizer = BertAdam(optimizer_grouped_parameters,lr=config.lr,warmup=1e-3,t_total=200000)
+    optimizer = BertAdam(optimizer_grouped_parameters,lr=config.lr,warmup=5e-4,t_total=100000)
     # model,optimizer = amp.initialize(model,optimizer,opt_level="01")
     # scheduler = get_linear_schedule_with_warmup(optimizer,40000,500000)
     
@@ -244,10 +247,10 @@ def main(config, model_filename):
 
     model = model.to(device)
     criterion = criterion.to(device)
-
+    experiment_detail = str(device_id) + "\n" + str(config.dropout) + '\n' + str(config.lr)+','+ str(part_1_1_lr)+','+str(part_1_2_lr)+','+str(part_2_1_lr)+','+str(part_2_2_lr) + '\n' + str(config.train_batch_size) + "\n" + "layers:7"
     if config.do_train:
         train(config.epoch_num, model, train_dataloader, dev_dataloader, optimizer, criterion, ['0', '1', '2', '3', '4'],
-              model_file, config.log_dir, config.print_step, config.clip,device)
+              model_file, config.log_dir, config.print_step, config.clip,device,experiment_detail)
 
     model.load_state_dict(torch.load(model_file))
 

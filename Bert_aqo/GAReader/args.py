@@ -46,13 +46,13 @@ def get_args(data_dir, cache_dir, embedding_folder, model_dir, log_dir,bert_conf
     parser.add_argument("--output_dim", default=5, type=int)
                         
     # 优化参数
-    parser.add_argument("--train_batch_size", default=2, type=int)
+    parser.add_argument("--train_batch_size", default=1, type=int)
     parser.add_argument("--dev_batch_size", default=32, type=int)
     parser.add_argument("--test_batch_size", default=4, type=int)
     parser.add_argument("--epoch_num", default=1000, type=int)
-    parser.add_argument("--dropout", default=0.1, type=float)
+    parser.add_argument("--dropout", default=0.5, type=float)
 
-    parser.add_argument("--lr", default=2e-5, type=float, help="learning rate")
+    parser.add_argument("--lr", default=5e-6, type=float, help="learning rate")
 
     parser.add_argument("--clip", default=5, type=int, help="")
     # Bert 参数
