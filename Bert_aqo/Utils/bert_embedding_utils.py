@@ -28,6 +28,8 @@ def load_data(path, device, tokenizer, cache_dir,max_query,max_sentence,max_opti
                     sentences = instance['article'].split('.')
                 else:
                     sentences = instance['article'].split('.')[0:-1]
+                if(len(sentences)>20):
+                    sentences = sentences[0:20]
                 for each_sentence in sentences:
                     sentence_tokens = tokenizer.tokenize(each_sentence)
                     each_article_ids  =tokenizer.convert_tokens_to_ids(sentence_tokens)
