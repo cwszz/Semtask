@@ -4,4 +4,4 @@ new_bert
 xlnet_model
 data
 .vscode
-__pycache__
+*/__pycache__
