@@ -151,7 +151,7 @@ def evaluate(model, iterator, criterion, label_list,device,log_dir):
 
 
 def main(config, model_filename):
-    device_id = 0
+    # device_id = 0
     if not os.path.exists(config.log_dir):
         os.makedirs(config.log_dir)
 
@@ -165,7 +165,7 @@ def main(config, model_filename):
         config.output_dir, model_filename)
 
     # Prepare the device
-    gpu_ids = [device_id]
+    gpu_ids = [2,3,4]
     device, n_gpu = get_device(gpu_ids[0])
     if n_gpu > 1:
         n_gpu = len(gpu_ids)
@@ -211,24 +211,24 @@ def main(config, model_filename):
     param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
 
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-    part_1_1_lr,part_1_2_lr,part_2_1_lr,part_2_2_lr = 3e-4, 3e-4,3e-4,3e-4
+    part_1_1_lr,part_1_2_lr,part_2_1_lr,part_2_2_lr = 1e-4, 1e-4,1e-4,1e-4
     optimizer_grouped_parameters = [
         {'params': [p for n, p in param_optimizer if not any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'final_linear' in n] , 'weight_decay': 0.01,'lr':part_1_1_lr,
+            nd in n for nd in no_decay) and 'bert' not in n ] , 'weight_decay': 0.01,'lr':part_1_1_lr,
         'name':[n for n, p in param_optimizer if not any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'final_linear' in n] },
+            nd in n for nd in no_decay) and 'bert' not in n ] },
         {'params': [p for n, p in param_optimizer if any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n], 'weight_decay': 0.0,'lr':part_1_2_lr,
+            nd in n for nd in no_decay) and 'bert' not in n ], 'weight_decay': 0.0,'lr':part_1_2_lr,
         'name':[n for n, p in param_optimizer if  any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] },
-        {'params': [p for n, p in param_optimizer if not any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n] , 'weight_decay': 0.01,'lr':part_2_1_lr,
-        'name':[n for n, p in param_optimizer if not any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias'  in n]},
-        {'params': [p for n, p in param_optimizer if any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n], 'weight_decay': 0.0,'lr':part_2_2_lr,
-        'name':[n for n, p in param_optimizer if  any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias'  in n]},
+            nd in n for nd in no_decay) and 'bert' not in n ] },
+        # {'params': [p for n, p in param_optimizer if not any(
+        #     nd in n for nd in no_decay) and 'bert' not in n  , 'weight_decay': 0.01,'lr':part_2_1_lr,
+        # 'name':[n for n, p in param_optimizer if not any(
+        #     nd in n for nd in no_decay) and 'bert' not in n ]},
+        # {'params': [p for n, p in param_optimizer if any(
+        #     nd in n for nd in no_decay) and 'bert' not in n , 'weight_decay': 0.0,'lr':part_2_2_lr,
+        # 'name':[n for n, p in param_optimizer if  any(
+        #     nd in n for nd in no_decay) and 'bert' not in n ]},
         {'params': [p for n, p in param_optimizer if not any(
             nd in n for nd in no_decay) and 'bert'  in n], 'weight_decay': 0.01,
         'name':[n for n, p in param_optimizer if not any(
@@ -244,10 +244,11 @@ def main(config, model_filename):
     scheduler = get_linear_schedule_with_warmup(optimizer,16000,200000)
     
     criterion = nn.CrossEntropyLoss()
-
+    # 并行GPU
+    model = torch.nn.DataParallel(model,gpu_ids)
     model = model.to(device)
     criterion = criterion.to(device)
-    experiment_detail = str(device_id) + "\n" + str(config.dropout) + '\n' + str(config.lr)+','+ str(part_1_1_lr)+','+str(part_1_2_lr)+','+str(part_2_1_lr)+','+str(part_2_2_lr) + '\n' + str(config.train_batch_size) + "\n" + "layers:7"
+    experiment_detail = str(config.dropout) + '\n' + str(config.lr)+','+ str(part_1_1_lr)+','+str(part_1_2_lr)+','+str(part_2_1_lr)+','+str(part_2_2_lr) + '\n' + str(config.train_batch_size) + "\n" + "layers:7"
     if config.do_train:
         train(config.epoch_num, model, train_dataloader, dev_dataloader, optimizer, criterion, ['0', '1', '2', '3', '4'],
               model_file, config.log_dir, config.print_step, config.clip,device,experiment_detail,scheduler)

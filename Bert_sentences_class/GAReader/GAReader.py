@@ -32,7 +32,7 @@ class GAReader(nn.Module):
         encoder_norm = nn.LayerNorm(768)
         self.encoder = TransformerEncoder(
             encoder_layer,
-            4,
+            10,
             encoder_norm
         )
         self.dropout = nn.Dropout(dropout)
@@ -81,31 +81,31 @@ class GAReader(nn.Module):
         o3_emb_new = self.oo_attention(o3_emb,[o0_emb,o1_emb,o2_emb,o4_emb])
         o4_emb_new = self.oo_attention(o4_emb,[o0_emb,o1_emb,o2_emb,o3_emb])
         # option and article interaction
-        qa0 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
+        qa = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
         ao0 = torch.mean(self.encoder(torch.cat([sentences_o,o0_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
         qo0 = torch.mean(self.encoder(torch.cat([q_emb,o0_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
 
-        qa1 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
+        # qa1 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
         ao1 = torch.mean(self.encoder(torch.cat([sentences_o,o1_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
         qo1 = torch.mean(self.encoder(torch.cat([q_emb,o1_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
 
-        qa2 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
+        # qa2 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
         ao2 = torch.mean(self.encoder(torch.cat([sentences_o,o2_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
         qo2 = torch.mean(self.encoder(torch.cat([q_emb,o2_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
 
-        qa3 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
+        # qa3 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
         ao3 = torch.mean(self.encoder(torch.cat([sentences_o,o3_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
         qo3 = torch.mean(self.encoder(torch.cat([q_emb,o3_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
 
-        qa4 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
+        # qa4 = torch.mean(self.encoder(torch.cat([q_emb,sentences_o],dim=1).transpose(0,1)),dim=0,keepdim=True)
         ao4 = torch.mean(self.encoder(torch.cat([sentences_o,o4_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
         qo4 = torch.mean(self.encoder(torch.cat([q_emb,o4_emb_new],dim=1).transpose(0,1)),dim=0,keepdim=True)
 
-        option0 = torch.cat([qa0,ao0,qo0],dim=-1)
-        option1 = torch.cat([qa1,ao1,qo1],dim=-1)
-        option2 = torch.cat([qa2,ao2,qo2],dim=-1)
-        option3 = torch.cat([qa3,ao3,qo3],dim=-1)
-        option4 = torch.cat([qa4,ao4,qo4],dim=-1)
+        option0 = torch.cat([qa,ao0,qo0],dim=-1)
+        option1 = torch.cat([qa,ao1,qo1],dim=-1)
+        option2 = torch.cat([qa,ao2,qo2],dim=-1)
+        option3 = torch.cat([qa,ao3,qo3],dim=-1)
+        option4 = torch.cat([qa,ao4,qo4],dim=-1)
 
         all_option = torch.cat((option0,option1,option2,option3,option4), dim=0).transpose(0,1)
 
