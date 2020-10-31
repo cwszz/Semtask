@@ -214,17 +214,17 @@ def main(config, model_filename):
     part_1_1_lr,part_1_2_lr,part_2_1_lr,part_2_2_lr = 3e-4, 3e-4,3e-4,3e-4
     optimizer_grouped_parameters = [
         {'params': [p for n, p in param_optimizer if not any(
-            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] , 'weight_decay': 0.01,'lr':part_1_1_lr,
+            nd in n for nd in no_decay) and 'bert' not in n and 'final_linear' in n] , 'weight_decay': 0.01,'lr':part_1_1_lr,
         'name':[n for n, p in param_optimizer if not any(
+            nd in n for nd in no_decay) and 'bert' not in n and 'final_linear' in n] },
+        {'params': [p for n, p in param_optimizer if any(
+            nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n], 'weight_decay': 0.0,'lr':part_1_2_lr,
+        'name':[n for n, p in param_optimizer if  any(
             nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] },
-        # {'params': [p for n, p in param_optimizer if any(
-        #     nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n], 'weight_decay': 0.0,'lr':part_1_2_lr,
-        # 'name':[n for n, p in param_optimizer if  any(
-        #     nd in n for nd in no_decay) and 'bert' not in n and 'bias' not in n] },
-        # {'params': [p for n, p in param_optimizer if not any(
-        #     nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n] , 'weight_decay': 0.01,'lr':part_2_1_lr,
-        # 'name':[n for n, p in param_optimizer if not any(
-        #     nd in n for nd in no_decay) and 'bert' not in n and 'bias'  in n]},
+        {'params': [p for n, p in param_optimizer if not any(
+            nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n] , 'weight_decay': 0.01,'lr':part_2_1_lr,
+        'name':[n for n, p in param_optimizer if not any(
+            nd in n for nd in no_decay) and 'bert' not in n and 'bias'  in n]},
         {'params': [p for n, p in param_optimizer if any(
             nd in n for nd in no_decay) and 'bert' not in n and 'bias' in n], 'weight_decay': 0.0,'lr':part_2_2_lr,
         'name':[n for n, p in param_optimizer if  any(

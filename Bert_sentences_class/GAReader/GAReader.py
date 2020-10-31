@@ -68,24 +68,12 @@ class GAReader(nn.Module):
         # paragraph selection
         for batch_id,batch_sentences in enumerate(a_ids):
             sentences_emb_o.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),
-                q_emb[batch_id],torch.cat([o0_emb[batch_id],o1_emb[batch_id],o2_emb[batch_id],o3_emb[batch_id],o4_emb[batch_id]],dim=0),4))
+                q_emb[batch_id],torch.cat([o0_emb[batch_id],o1_emb[batch_id],o2_emb[batch_id],o3_emb[batch_id],o4_emb[batch_id]],dim=0),3))
             # sentences_emb_o1.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o1_emb[batch_id],3))
             # sentences_emb_o2.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o2_emb[batch_id],3))
             # sentences_emb_o3.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o3_emb[batch_id],3))
             # sentences_emb_o4.append(self.sentences_select(self.word_embedding(input_ids=batch_sentences.transpose(0,1)),q_emb[batch_id],o4_emb[batch_id],3))
         sentences_o = torch.cat(sentences_emb_o,dim=0)
-        # sentences_emb = self.word_embedding.(sentences_o)
-        # o0_emb_sentence = self.word_embedding.bert(input_ids=o0_ids)[1]
-        # o1_emb_sentence = self.word_embedding.bert(input_ids=o1_ids)[1]
-        # o2_emb_sentence = self.word_embedding.bert(input_ids=o2_ids)[1]
-        # o3_emb_sentence = self.word_embedding.bert(input_ids=o3_ids)[1]
-        # o4_emb_sentence = self.word_embedding.bert(input_ids=o4_ids)[1]
-        # q_emb_sentence = self.word_embedding.bert(input_ids=q_ids)[1]
-            # sentences_o1 = torch.cat(sentences_emb_o1,dim=0)
-            # sentences_o2 = torch.cat(sentences_emb_o2,dim=0)
-            # sentences_o3 = torch.cat(sentences_emb_o3,dim=0)
-            # sentences_o4 = torch.cat(sentences_emb_o4,dim=0)
-            # article_emb = self.word_embedding(input_ids=a_ids,max_l=a_len)
         # options interaction
         o0_emb_new = self.oo_attention(o0_emb,[o1_emb,o2_emb,o3_emb,o4_emb])
         o1_emb_new = self.oo_attention(o1_emb,[o0_emb,o2_emb,o3_emb,o4_emb])
